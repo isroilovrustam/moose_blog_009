@@ -1,7 +1,7 @@
 from django.core.validators import validate_comma_separated_integer_list
 from django.shortcuts import render, redirect
 from django.template.defaulttags import comment
-
+from django.core.paginator import Paginator
 from contact.forms import SubscriptionForm
 from .models import Blog, Comment
 from .forms import CommentForm
@@ -11,18 +11,25 @@ from .forms import CommentForm
 
 
 def index(request):
-    return render(request, "index.html")
+    blogs = Blog.objects.all().order_by("-id")[:2]
+    context = {
+        "blogs": blogs
+    }
+    return render(request, "index.html", context)
 
 
 def blog(request):
-    blog = Blog.objects.all()
+    b = Blog.objects.all().order_by('-id')
+    p = Paginator(b, 1)
+    page = request.GET.get('page')
+    blog = p.get_page(page)
     sub = SubscriptionForm(request.POST or None)
     if sub.is_valid():
         sub.save()
         return redirect(".")
     ctx = {
         "blogs": blog,
-        'sub':sub
+        'sub': sub
     }
     return render(request, 'blog.html', ctx)
 
